@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Absensi</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-primary px-4">
+    <span class="navbar-brand">Sistem Absensi Siswa</span>
+    <button class="btn btn-light" id="logoutBtn">Logout</button>
+  </nav>
+
+  <div class="container my-4">
+    <h3 class="mb-4">Form Absensi</h3>
+    <form id="absensiForm" class="row g-3">
+      <div class="col-md-6">
+        <input type="text" id="nama" class="form-control" placeholder="Nama Siswa" required>
+      </div>
+      <div class="col-md-4">
+        <select id="keterangan" class="form-select" required>
+          <option value="Hadir">Hadir</option>
+          <option value="Izin">Izin</option>
+          <option value="Sakit">Sakit</option>
+          <option value="Alpa">Alpa</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-success w-100">Absen</button>
+      </div>
+    </form>
+
+    <hr class="my-4">
+
+    <h4>Data Absensi</h4>
+    <table class="table table-bordered table-striped mt-3">
+      <thead class="table-primary">
+        <tr>
+          <th>Nama</th>
+          <th>Tanggal</th>
+          <th>Waktu</th>
+          <th>Keterangan</th>
+        </tr>
+      </thead>
+      <tbody id="dataAbsensi"></tbody>
+    </table>
+  </div>
+
+  <script>
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut();
+    });
+
+    const form = document.getElementById('absensiForm');
+    const namaInput = document.getElementById('nama');
+    const keteranganInput = document.getElementById('keterangan');
+    const dataList = document.getElementById('dataAbsensi');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nama = namaInput.value;
+      const keterangan = keteranganInput.value;
+      const tanggal = new Date().toISOString().split('T')[0];
+      const waktu = new Date().toLocaleTimeString();
+
+      const absensiRef = db.ref('absensi').push();
+      absensiRef.set({
+        nama: nama,
+        tanggal: tanggal,
+        waktu: waktu,
+        keterangan: keterangan
+      });
+
+      form.reset();
+    });
+
+    const absensiRef = db.ref('absensi');
+    absensiRef.on('value', function(snapshot) {
+      dataList.innerHTML = '';
+      snapshot.forEach(function(childSnapshot) {
+        const data = childSnapshot.val();
+        const row = `
+          <tr>
+            <td>${data.nama}</td>
+            <td>${data.tanggal}</td>
+            <td>${data.waktu}</td>
+            <td>${data.keterangan}</td>
+          </tr>
+        `;
+        dataList.innerHTML += row;
+      });
+    });
+  </script>
+</body>
+</html>
